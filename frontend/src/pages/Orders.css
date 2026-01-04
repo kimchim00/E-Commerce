@@ -1,0 +1,56 @@
+.orders-container {
+  padding: 48px 24px;
+  background: #fff;
+  border-radius: 12px;
+  margin: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.orders-title {
+  margin-bottom: 32px !important;
+}
+
+.orders-container .ant-list-item {
+  padding: 0;
+}
+
+.orders-container .ant-card {
+  width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .orders-container {
+    margin: 16px;
+    padding: 24px 16px;
+  }
+
+  .orders-title {
+    font-size: 24px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .orders-container .ant-descriptions {
+    font-size: 14px;
+  }
+
+  .orders-container .ant-descriptions-item-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .orders-container {
+    margin: 12px;
+    padding: 16px 12px;
+  }
+
+  .orders-title {
+    font-size: 20px !important;
+  }
+
+  .orders-container .ant-card {
+    padding: 12px;
+  }
+}
+

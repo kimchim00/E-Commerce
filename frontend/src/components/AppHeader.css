@@ -1,0 +1,116 @@
+.app-header {
+  position: fixed;
+  z-index: 1000;
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  gap: 24px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+.logo-icon {
+  font-size: 28px;
+}
+
+.logo-text {
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.header-search {
+  flex: 1;
+  max-width: 600px;
+  min-width: 300px;
+}
+
+.header-menu {
+  background: rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 24px;
+}
+
+.header-menu .ant-menu-item {
+  color: rgba(255, 255, 255, 0.85);
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s;
+}
+
+.header-menu .ant-menu-item:hover,
+.header-menu .ant-menu-item-selected {
+  color: white;
+  border-bottom-color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.cart-button,
+.user-button {
+  color: white;
+  border: none;
+  transition: all 0.3s;
+}
+
+.cart-button:hover,
+.user-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+
+.login-button {
+  border-color: white;
+  color: white;
+}
+
+.login-button:hover {
+  background: white;
+  color: #667eea;
+  border-color: white;
+}
+
+@media (max-width: 768px) {
+  .header-top {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+  
+  .logo-text {
+    font-size: 18px;
+  }
+  
+  .header-search {
+    order: 3;
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .header-menu {
+    display: none;
+  }
+}
+

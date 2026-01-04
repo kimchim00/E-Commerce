@@ -1,0 +1,184 @@
+.shipping-info-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  background: linear-gradient(to bottom, #f8f9ff 0%, #ffffff 100%);
+  min-height: calc(100vh - 200px);
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.page-header h1 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.section-card {
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  background: #fff;
+}
+
+.shipping-option-card {
+  height: 100%;
+  border-radius: 16px;
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.shipping-option-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.shipping-option-header {
+  text-align: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px;
+}
+
+.shipping-option-body {
+  padding: 8px 0;
+}
+
+.info-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.info-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.info-icon {
+  font-size: 24px;
+  color: #667eea;
+  margin-top: 4px;
+}
+
+.info-item h5 {
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.info-item p {
+  margin-bottom: 0;
+  color: #666;
+}
+
+.international-info {
+  padding: 16px;
+}
+
+.country-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.country-list li {
+  padding: 8px 0;
+  padding-left: 24px;
+  position: relative;
+  color: #666;
+}
+
+.country-list li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.faq-item {
+  padding: 16px;
+  border-radius: 12px;
+  background: #fafafa;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.faq-item h5 {
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.faq-item p {
+  margin-bottom: 0;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .shipping-info-page {
+    padding: 24px 12px;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .shipping-option-card {
+    margin-bottom: 16px;
+  }
+
+  .info-item {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .info-icon {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shipping-info-page {
+    padding: 16px 8px;
+  }
+
+  .page-header h1 {
+    font-size: 20px;
+  }
+
+  .section-card {
+    padding: 16px;
+  }
+
+  .shipping-option-header {
+    padding: 16px 0;
+  }
+
+  .shipping-option-header div {
+    font-size: 24px;
+  }
+}
+
+
+
+

@@ -1,0 +1,188 @@
+.digikala-products-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  background: linear-gradient(to bottom, #f8f9ff 0%, #ffffff 100%);
+  min-height: calc(100vh - 200px);
+}
+
+.products-header-card {
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  background: #fff;
+  margin-bottom: 24px;
+}
+
+.products-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.results-info {
+  color: #666;
+  font-size: 14px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Filter Sidebar */
+.filters-sidebar {
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  background: #fff;
+  position: sticky;
+  top: 100px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.filters-sidebar .ant-card-head {
+  border-bottom: 2px solid #f0f0f0;
+  padding: 16px 20px;
+}
+
+.filters-sidebar .ant-card-head-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.filters-sidebar .ant-card-body {
+  padding: 16px 20px;
+}
+
+.filters-sidebar .ant-collapse {
+  border: none;
+  background: transparent;
+}
+
+.filters-sidebar .ant-collapse-item {
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 8px;
+}
+
+.filters-sidebar .ant-collapse-header {
+  padding: 12px 0 !important;
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+}
+
+.filters-sidebar .ant-collapse-content {
+  border-top: none;
+  padding: 12px 0 !important;
+}
+
+.filters-sidebar .ant-collapse-content-box {
+  padding: 0 !important;
+}
+
+.filters-sidebar .ant-radio-group {
+  width: 100%;
+}
+
+.filters-sidebar .ant-radio-wrapper {
+  display: block;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.filters-sidebar .ant-radio-wrapper:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.filters-sidebar .ant-checkbox-wrapper {
+  display: block;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.filters-sidebar .ant-checkbox-wrapper:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.filters-sidebar .ant-slider {
+  margin: 16px 0;
+}
+
+.filters-sidebar .ant-input {
+  border-radius: 6px;
+}
+
+.filters-sidebar .ant-select {
+  border-radius: 6px;
+}
+
+/* Scrollbar styling for filter sidebar */
+.filters-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filters-sidebar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.filters-sidebar::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.filters-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
+@media (max-width: 768px) {
+  .digikala-products-page {
+    padding: 12px;
+  }
+
+  .filters-sidebar {
+    position: relative;
+    top: 0;
+    max-height: none;
+    margin-bottom: 24px;
+  }
+
+  .products-header {
+    flex-direction: column;
+  }
+
+  .products-header .ant-input-search {
+    max-width: 100% !important;
+  }
+
+  .products-header-card {
+    margin-bottom: 16px;
+  }
+
+  .results-info {
+    font-size: 12px;
+    padding-top: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .digikala-products-page {
+    padding: 8px;
+  }
+
+  .filters-sidebar .ant-card-head {
+    padding: 12px 16px;
+  }
+
+  .filters-sidebar .ant-card-body {
+    padding: 12px 16px;
+  }
+
+  .products-header-card {
+    padding: 12px;
+  }
+}

@@ -1,0 +1,102 @@
+.hero-carousel {
+  width: 100%;
+  margin-bottom: 32px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.carousel-slide {
+  height: 450px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.carousel-slide::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+  z-index: 1;
+}
+
+.carousel-content {
+  text-align: center;
+  color: white;
+  z-index: 2;
+  position: relative;
+}
+
+.carousel-title {
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 20px;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  letter-spacing: -1px;
+  animation: fadeInUp 0.8s ease;
+}
+
+.carousel-subtitle {
+  font-size: 1.5rem;
+  opacity: 0.98;
+  max-width: 700px;
+  margin: 0 auto 40px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  font-weight: 500;
+  animation: fadeInUp 1s ease 0.2s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.carousel-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  height: 56px !important;
+  padding: 0 40px !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4) !important;
+  letter-spacing: 0.5px !important;
+  animation: fadeInUp 1.2s ease 0.4s both;
+}
+
+.carousel-button:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 12px 28px rgba(102, 126, 234, 0.5) !important;
+}
+
+@media (max-width: 768px) {
+  .carousel-slide {
+    height: 250px;
+  }
+  
+  .carousel-title {
+    font-size: 2rem;
+  }
+  
+  .carousel-subtitle {
+    font-size: 1rem;
+  }
+}
+
