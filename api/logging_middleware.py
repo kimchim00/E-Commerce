@@ -12,8 +12,8 @@ from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .logging_config import action_logger
-from .action_mapper import (
+from logging_config import action_logger
+from action_mapper import (
     map_path_to_action,
     extract_session_info,
     extract_context_from_request
