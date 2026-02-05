@@ -43,6 +43,12 @@ class UserAction(str, Enum):
     ADD_TO_WISHLIST = "add_to_wishlist"
     REMOVE_FROM_WISHLIST = "remove_from_wishlist"
 
+    # Reviews
+    VIEW_REVIEWS = "view_reviews"
+    SUBMIT_REVIEW = "submit_review"
+    VIEW_MY_REVIEWS = "view_my_reviews"
+    VIEW_USER_PRODUCT_REVIEW = "view_user_product_review"
+
     # System
     HEALTH_CHECK = "health_check"
     API_ROOT = "api_root"
@@ -80,6 +86,12 @@ PATH_PATTERNS = [
     (r"^/wishlist/products/?$", ["GET"], UserAction.VIEW_WISHLIST),
     (r"^/wishlist/add/?$", ["POST"], UserAction.ADD_TO_WISHLIST),
     (r"^/wishlist/remove/?$", ["DELETE"], UserAction.REMOVE_FROM_WISHLIST),
+
+    # Reviews
+    (r"^/reviews/?$", ["GET"], UserAction.VIEW_REVIEWS),
+    (r"^/reviews/?$", ["POST"], UserAction.SUBMIT_REVIEW),
+    (r"^/reviews/my_reviews/?$", ["GET"], UserAction.VIEW_MY_REVIEWS),
+    (r"^/reviews/user_product_review/?$", ["GET"], UserAction.VIEW_USER_PRODUCT_REVIEW),
 
     # System
     (r"^/health/?$", ["GET"], UserAction.HEALTH_CHECK),
@@ -123,27 +135,64 @@ def extract_session_info(request: Request) -> dict:
         request: The FastAPI request object
 
     Returns:
-        Dictionary with session_id and is_authenticated
+        Dictionary with session_id, user_id, and is_authenticated
     """
+    import base64
+    import json
+
     session_id = request.cookies.get("sessionid")
+    user_id = None
+
+    # Try to extract user_id from JWT token in Authorization header
+    auth_header = request.headers.get("authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]  # Remove "Bearer " prefix
+        try:
+            # Try to decode JWT without verification (just to read payload)
+            # Split token and decode the payload part
+            parts = token.split('.')
+            if len(parts) == 3:
+                # Decode the payload (second part)
+                payload = parts[1]
+                # Add padding if needed
+                payload += '=' * (4 - len(payload) % 4)
+                decoded = base64.urlsafe_b64decode(payload)
+                token_data = json.loads(decoded)
+                user_id = token_data.get('user_id') or token_data.get('sub') or token_data.get('id')
+        except Exception:
+            # If token decode fails, we'll try other methods
+            pass
+
+    # Try to extract user_id from session cookie
+    if not user_id and session_id:
+        # Session ID format might contain user info - implementation specific
+        # For Django sessions, we'd need to query Django directly
+        # For now, we'll leave it to be populated from response data
+        pass
 
     # Truncate session ID for privacy (show first 8 chars)
     session_display = session_id[:8] + "..." if session_id and len(session_id) > 8 else session_id
 
-    return {
+    result = {
         "session_id": session_display,
-        "is_authenticated": bool(session_id)
+        "is_authenticated": bool(session_id or user_id)
     }
 
+    if user_id:
+        result["user_id"] = user_id
 
-def extract_context_from_request(path: str, method: str, query_params: Optional[dict] = None) -> Optional[dict]:
+    return result
+
+
+def extract_context_from_request(path: str, method: str, query_params: Optional[dict] = None, request_body: Optional[dict] = None) -> Optional[dict]:
     """
-    Extract business context from request path and parameters.
+    Extract business context from request path, parameters, and body.
 
     Args:
         path: The request URL path
         method: The HTTP method
         query_params: Optional query parameters
+        request_body: Optional request body data
 
     Returns:
         Dictionary with extracted context or None
@@ -169,6 +218,20 @@ def extract_context_from_request(path: str, method: str, query_params: Optional[
     order_match = re.search(r'/orders/(\d+)', path)
     if order_match:
         context['order_id'] = int(order_match.group(1))
+
+    # Extract review context from query params (product_id for reviews)
+    if path.startswith('/reviews'):
+        if query_params and 'product_id' in query_params:
+            context['product_id'] = query_params['product_id']
+
+        # Extract rating and product_id from POST body
+        if method == 'POST' and request_body:
+            if 'product_id' in request_body:
+                context['product_id'] = request_body['product_id']
+            if 'rating' in request_body:
+                context['rating_value'] = request_body['rating']
+            if 'comment' in request_body and request_body['comment']:
+                context['has_comment'] = True
 
     # Extract search/filter context from query params
     if query_params:

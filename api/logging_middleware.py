@@ -42,11 +42,28 @@ class ActionLoggingMiddleware(BaseHTTPMiddleware):
         client_ip = self._get_client_ip(request)
         user_agent = request.headers.get("user-agent")
 
-        # Extract session info
+        # Extract session info (includes user_id if available)
         session_info = extract_session_info(request)
 
         # Determine action from path and method
         action = map_path_to_action(path, method, query_params)
+
+        # Try to capture request body for POST/PUT/PATCH requests (for context)
+        request_body = None
+        if method in ["POST", "PUT", "PATCH"]:
+            try:
+                # Store the body for logging context
+                body_bytes = await request.body()
+                if body_bytes:
+                    import json
+                    request_body = json.loads(body_bytes)
+                # Create a new request with the body for the next handler
+                from starlette.requests import Request as StarletteRequest
+                async def receive():
+                    return {"type": "http.request", "body": body_bytes}
+                request = StarletteRequest(request.scope, receive)
+            except Exception:
+                pass
 
         # Initialize response variables
         status_code = 500
@@ -70,8 +87,8 @@ class ActionLoggingMiddleware(BaseHTTPMiddleware):
             # Determine log level based on status code
             level = self._determine_log_level(status_code)
 
-            # Extract request context (product_id, etc. from path)
-            request_context = extract_context_from_request(path, method, query_params)
+            # Extract request context (product_id, etc. from path and body)
+            request_context = extract_context_from_request(path, method, query_params, request_body)
 
             # Determine event type
             event_type = "error" if error_type else ("user_action" if action != "unknown" else "request")

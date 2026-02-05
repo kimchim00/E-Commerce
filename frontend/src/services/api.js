@@ -90,5 +90,12 @@ export const register = (username, email, password) =>
 export const login = (username, password) =>
   api.post('/auth/login', { username, password });
 
+// Reviews
+export const getReviews = (productId) => api.get('/reviews', { params: { product_id: productId } });
+export const getUserProductReview = (productId) => api.get('/reviews/user_product_review', { params: { product_id: productId } });
+export const submitReview = (productId, rating, comment = '') =>
+  api.post('/reviews', { product_id: productId, rating, comment });
+export const getMyReviews = () => api.get('/reviews/my_reviews');
+
 export default api;
 
