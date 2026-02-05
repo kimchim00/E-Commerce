@@ -63,7 +63,10 @@ class Cart(models.Model):
 
     @property
     def total_price(self):
-        return (self.product.discount_price or self.product.price) * self.quantity
+        # Use discount price only if the product is in flash sale
+        if self.product.discount_price and self.product.is_flash_sale:
+            return self.product.discount_price * self.quantity
+        return self.product.price * self.quantity
 
 
 class Wishlist(models.Model):

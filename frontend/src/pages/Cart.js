@@ -188,7 +188,19 @@ const Cart = () => {
                       {item.product?.name || 'Unknown Product'}
                     </Title>
                     <div style={{ color: '#666', fontSize: 14 }}>
-                      ${item.product?.price?.toFixed(2) || '0.00'} each
+                      {item.product?.discount_price && item.product?.is_flash_sale ? (
+                        <>
+                          <span style={{ textDecoration: 'line-through', marginRight: 8, color: '#999' }}>
+                            ${item.product.price?.toFixed(2)}
+                          </span>
+                          <span style={{ color: '#f5222d', fontWeight: 600 }}>
+                            ${item.product.discount_price?.toFixed(2)}
+                          </span>
+                          {' each'}
+                        </>
+                      ) : (
+                        `$${item.product?.price?.toFixed(2) || '0.00'} each`
+                      )}
                     </div>
                   </div>
                   <Space size="middle" align="center">

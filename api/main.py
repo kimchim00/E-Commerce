@@ -6,7 +6,12 @@ from pydantic import BaseModel
 from typing import List, Optional
 import httpx
 
+from logging_middleware import ActionLoggingMiddleware
+
 app = FastAPI(title="E-commerce API", version="1.0.0")
+
+# Add action logging middleware (must be added before CORS)
+app.add_middleware(ActionLoggingMiddleware)
 
 # Global exception handler for connection errors
 @app.exception_handler(httpx.ConnectError)
