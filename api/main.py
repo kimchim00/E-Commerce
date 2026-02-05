@@ -129,6 +129,24 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ReviewCreate(BaseModel):
+    product_id: int
+    rating: int
+    comment: Optional[str] = ""
+
+
+class Review(BaseModel):
+    id: int
+    user: dict
+    rating: int
+    comment: Optional[str] = ""
+    created_at: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
+
 # Helper function to get Django API client
 async def get_django_client():
     async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
@@ -697,6 +715,177 @@ async def login(
             status_code=e.response.status_code,
             detail=f"Django error: {error_detail}"
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# Reviews endpoints
+@app.get("/reviews", response_model=List[Review])
+async def get_reviews(
+    product_id: Optional[int] = None,
+    request: Request = None,
+    token: Optional[str] = Depends(get_current_user),
+    client: httpx.AsyncClient = Depends(get_django_client)
+):
+    """Get reviews for a product or all reviews"""
+    try:
+        cookies = dict(request.cookies)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        params = {}
+        if product_id:
+            params["product_id"] = product_id
+
+        response = await client.get(
+            f"{DJANGO_BASE_URL}/reviews/",
+            params=params,
+            headers=headers,
+            cookies=cookies
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        # Django REST Framework returns paginated response, extract results
+        if isinstance(data, dict) and "results" in data:
+            return data["results"]
+        return data if isinstance(data, list) else []
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=503,
+            detail="Django backend is not available. Please ensure Django is running on http://localhost:8000"
+        )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/reviews", response_model=Review)
+async def submit_review(
+    review_data: ReviewCreate,
+    request: Request,
+    token: Optional[str] = Depends(get_current_user),
+    client: httpx.AsyncClient = Depends(get_django_client)
+):
+    """Submit or update a product review"""
+    try:
+        cookies = dict(request.cookies)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        data = {
+            "product_id": review_data.product_id,
+            "rating": review_data.rating,
+            "comment": review_data.comment
+        }
+
+        response = await client.post(
+            f"{DJANGO_BASE_URL}/reviews/",
+            json=data,
+            headers=headers,
+            cookies=cookies
+        )
+
+        if response.status_code == 401 or response.status_code == 403:
+            error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            error_detail = error_data.get("detail", error_data.get("error", "Authentication required"))
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Authentication error: {error_detail}. Please log in first."
+            )
+
+        response.raise_for_status()
+        return response.json()
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=503,
+            detail="Django backend is not available. Please ensure Django is running on http://localhost:8000"
+        )
+    except httpx.HTTPStatusError as e:
+        error_detail = "Unknown error"
+        try:
+            if e.response.headers.get("content-type", "").startswith("application/json"):
+                error_data = e.response.json()
+                error_detail = error_data.get("detail", error_data.get("error", str(e)))
+            else:
+                error_detail = e.response.text[:200] if e.response.text else str(e)
+        except:
+            error_detail = str(e)
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Django error: {error_detail}"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/reviews/my_reviews", response_model=List[Review])
+async def get_my_reviews(
+    request: Request,
+    token: Optional[str] = Depends(get_current_user),
+    client: httpx.AsyncClient = Depends(get_django_client)
+):
+    """Get all reviews by the current user"""
+    try:
+        cookies = dict(request.cookies)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        response = await client.get(
+            f"{DJANGO_BASE_URL}/reviews/my_reviews/",
+            headers=headers,
+            cookies=cookies
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        if isinstance(data, dict) and "results" in data:
+            return data["results"]
+        return data if isinstance(data, list) else []
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=503,
+            detail="Django backend is not available. Please ensure Django is running on http://localhost:8000"
+        )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/reviews/user_product_review", response_model=Review)
+async def get_user_product_review(
+    product_id: int,
+    request: Request,
+    token: Optional[str] = Depends(get_current_user),
+    client: httpx.AsyncClient = Depends(get_django_client)
+):
+    """Check if the current user has reviewed a specific product"""
+    try:
+        cookies = dict(request.cookies)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        response = await client.get(
+            f"{DJANGO_BASE_URL}/reviews/user_product_review/",
+            params={"product_id": product_id},
+            headers=headers,
+            cookies=cookies
+        )
+
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail="No review found")
+
+        response.raise_for_status()
+        return response.json()
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=503,
+            detail="Django backend is not available. Please ensure Django is running on http://localhost:8000"
+        )
+    except HTTPException:
+        raise
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
