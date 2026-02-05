@@ -11,7 +11,7 @@ import {
   message,
 } from 'antd';
 import { HeartFilled, ShoppingCartOutlined, DeleteOutlined } from '@ant-design/icons';
-import { getWishlist, removeFromWishlist, addToCart } from '../services/api';
+import { getWishlist, removeFromWishlist, addToCart, normalizeList } from '../services/api';
 import DigikalaProductCard from '../components/DigikalaProductCard';
 import './Wishlist.css';
 
@@ -31,7 +31,7 @@ const Wishlist = () => {
     setLoading(true);
     try {
       const response = await getWishlist();
-      setWishlistItems(response.data);
+      setWishlistItems(normalizeList(response.data));
     } catch (error) {
       console.error('Error loading wishlist:', error);
       if (error.response?.status === 401) {

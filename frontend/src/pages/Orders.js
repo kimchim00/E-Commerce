@@ -11,7 +11,7 @@ import {
   Descriptions,
   Button,
 } from 'antd';
-import { getOrders } from '../services/api';
+import { getOrders, normalizeList } from '../services/api';
 import './Orders.css';
 
 const { Title } = Typography;
@@ -29,7 +29,7 @@ const Orders = () => {
     setLoading(true);
     try {
       const response = await getOrders();
-      setOrders(response.data);
+      setOrders(normalizeList(response.data));
     } catch (error) {
       console.error('Error loading orders:', error);
       if (error.response?.status === 401) {
@@ -151,7 +151,7 @@ const Orders = () => {
                       color: '#667eea',
                     }}
                   >
-                    ${(order.total_amount || 0).toFixed(2)}
+                    ${Number(order.total_amount || 0).toFixed(2)}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Shipping Address">
@@ -191,7 +191,7 @@ const Orders = () => {
                             {item.product?.name || 'Unknown Product'}
                           </div>
                           <div style={{ color: '#666', fontSize: 12 }}>
-                            Quantity: {item.quantity} × ${(item.price || 0).toFixed(2)}
+                            Quantity: {item.quantity} × ${Number(item.price || 0).toFixed(2)}
                           </div>
                         </div>
                         <div
@@ -201,7 +201,7 @@ const Orders = () => {
                             color: '#667eea',
                           }}
                         >
-                          ${(item.total_price || 0).toFixed(2)}
+                          ${Number(item.total_price || 0).toFixed(2)}
                         </div>
                       </div>
                     </List.Item>

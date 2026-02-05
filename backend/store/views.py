@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from django.contrib.auth.models import User
 from django.db.models import Q, F, Case, When, IntegerField
 from .models import Category, Product, Cart, Order, OrderItem
@@ -17,10 +17,15 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
 
 
-class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.filter(available=True)
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
+
+    def get_permissions(self):
+        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            return [IsAdminUser()]
+        return [AllowAny()]
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -28,7 +33,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return context
 
     def get_queryset(self):
-        queryset = Product.objects.filter(available=True)
+        if self.request.user.is_staff:
+            queryset = Product.objects.all()
+        else:
+            queryset = Product.objects.filter(available=True)
         category = self.request.query_params.get('category', None)
         search = self.request.query_params.get('search', None)
         featured = self.request.query_params.get('featured', None)

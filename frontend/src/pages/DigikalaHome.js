@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Typography, Button, Card, Statistic } from 'antd';
 import { FireOutlined, ThunderboltOutlined, StarOutlined, RightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { getCategories, getProducts } from '../services/api';
+import { getCategories, getProducts, normalizeList } from '../services/api';
 import HeroCarousel from '../components/HeroCarousel';
 import DigikalaProductCard from '../components/DigikalaProductCard';
 import { message } from 'antd';
@@ -35,9 +35,9 @@ const DigikalaHome = () => {
         getCategories(),
         getProducts(),
       ]);
-      setCategories(categoriesRes.data);
+      setCategories(normalizeList(categoriesRes.data));
       
-      const products = productsRes.data;
+      const products = normalizeList(productsRes.data);
       setFlashSaleProducts(products.filter(p => p.is_flash_sale).slice(0, 12));
       setFeaturedProducts(products.filter(p => p.is_featured).slice(0, 12));
       setBestSellers(products.slice(0, 12));

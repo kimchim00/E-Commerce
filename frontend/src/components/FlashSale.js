@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Typography, Button, Tag, Statistic } from 'antd';
 import { FireOutlined, ShoppingCartOutlined, HeartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { getProducts } from '../services/api';
+import { getProducts, normalizeList } from '../services/api';
 import './FlashSale.css';
 
 const { Title } = Typography;
@@ -41,7 +41,7 @@ const FlashSale = () => {
   const loadFlashSaleProducts = async () => {
     try {
       const response = await getProducts({ flash_sale: true });
-      setProducts(response.data.slice(0, 8));
+      setProducts(normalizeList(response.data).slice(0, 8));
     } catch (error) {
       console.error('Error loading flash sale products:', error);
     }

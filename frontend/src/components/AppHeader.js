@@ -11,7 +11,7 @@ import {
   MenuOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getCart, getProducts } from '../services/api';
+import { getCart, getProducts, normalizeList } from '../services/api';
 import './AppHeader.css';
 
 const { Header } = Layout;
@@ -36,7 +36,8 @@ const AppHeader = () => {
   const loadCart = async () => {
     try {
       const response = await getCart();
-      const count = response.data.reduce((sum, item) => sum + item.quantity, 0);
+      const items = normalizeList(response.data);
+      const count = items.reduce((sum, item) => sum + item.quantity, 0);
       setCartCount(count);
     } catch (error) {
       // Silently fail if not authenticated
@@ -62,7 +63,7 @@ const AppHeader = () => {
     if (value && value.length > 2) {
       try {
         const response = await getProducts({ search: value });
-        const products = response.data.slice(0, 5);
+        const products = normalizeList(response.data).slice(0, 5);
         setSearchOptions(
           products.map((product) => ({
             value: product.name,

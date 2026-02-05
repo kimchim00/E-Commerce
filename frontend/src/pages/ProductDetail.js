@@ -5,17 +5,28 @@ import {
   Typography,
   Button,
   InputNumber,
+  Input,
   Spin,
   message,
-  Descriptions,
   Image,
   Tag,
   Rate,
-  Space,
   Divider,
+  Progress,
+  Tooltip,
 } from 'antd';
-import { ShoppingCartOutlined, HeartOutlined, HeartFilled, StarFilled } from '@ant-design/icons';
-import { getProduct, addToCart, addToWishlist, removeFromWishlist, getWishlist, getUserProductReview, submitReview, getReviews } from '../services/api';
+import {
+  ShoppingCartOutlined,
+  HeartOutlined,
+  HeartFilled,
+  StarFilled,
+  SafetyOutlined,
+  TruckOutlined,
+  SyncOutlined,
+  CheckCircleOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
+import { getProduct, addToCart, addToWishlist, removeFromWishlist, getWishlist, getUserProductReview, submitReview, getReviews, normalizeList } from '../services/api';
 import './ProductDetail.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -30,6 +41,8 @@ const ProductDetail = () => {
   const [addingToWishlist, setAddingToWishlist] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [userRating, setUserRating] = useState(0);
+  const [commentText, setCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
@@ -59,7 +72,7 @@ const ProductDetail = () => {
     }
     try {
       const response = await getWishlist();
-      const inWishlist = response.data.some(item => item.id === parseInt(id));
+      const inWishlist = normalizeList(response.data).some(item => item.id === parseInt(id, 10));
       setIsInWishlist(inWishlist);
     } catch (error) {
       console.log('Could not check wishlist status');
@@ -149,7 +162,7 @@ const ProductDetail = () => {
     setLoadingReviews(true);
     try {
       const response = await getReviews(id);
-      setReviews(response.data || []);
+      setReviews(normalizeList(response.data));
     } catch (error) {
       console.error('Error loading reviews:', error);
       // Don't show error message as reviews are optional
@@ -157,6 +170,18 @@ const ProductDetail = () => {
       setLoadingReviews(false);
     }
   };
+
+  const ratingStats = React.useMemo(() => {
+    const counts = [0, 0, 0, 0, 0];
+    reviews.forEach((review) => {
+      const value = Number(review.rating || 0);
+      if (value >= 1 && value <= 5) {
+        counts[value - 1] += 1;
+      }
+    });
+    const total = counts.reduce((sum, value) => sum + value, 0);
+    return { counts, total };
+  }, [reviews]);
 
   const handleRatingChange = async (value) => {
     if (!localStorage.getItem('token')) {
@@ -180,6 +205,38 @@ const ProductDetail = () => {
     }
   };
 
+  const handleSubmitComment = async () => {
+    if (!localStorage.getItem('token')) {
+      message.warning('Please login to leave a comment');
+      navigate('/login');
+      return;
+    }
+
+    if (!commentText.trim()) {
+      message.warning('Please write a comment before submitting');
+      return;
+    }
+
+    if (!userRating) {
+      message.warning('Please rate this product before submitting a comment');
+      return;
+    }
+
+    setSubmittingComment(true);
+    try {
+      await submitReview(product.id, userRating, commentText.trim());
+      message.success('Thanks! Your comment has been submitted.');
+      setCommentText('');
+      loadProduct();
+      loadProductReviews();
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+      message.error('Failed to submit comment. Please try again.');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -194,6 +251,8 @@ const ProductDetail = () => {
 
   const effectivePrice = product.discount_price && product.is_flash_sale ? product.discount_price : product.price;
   const hasDiscount = product.discount_price && product.is_flash_sale;
+  const formattedCreatedAt = product.created_at ? new Date(product.created_at).toLocaleDateString() : null;
+  const formattedUpdatedAt = product.updated_at ? new Date(product.updated_at).toLocaleDateString() : null;
 
   return (
     <div className="page-container product-detail-container">
@@ -230,26 +289,114 @@ const ProductDetail = () => {
                 No Image Available
               </div>
             )}
+
+            <div className="image-features">
+              <div className="quick-facts">
+                <div className="quick-fact-card">
+                  <CheckCircleOutlined />
+                  <div>
+                    <div className="quick-fact-title">Quality Checked</div>
+                    <div className="quick-fact-text">Inspected before shipping</div>
+                  </div>
+                </div>
+                <div className="quick-fact-card">
+                  <TruckOutlined />
+                  <div>
+                    <div className="quick-fact-title">Fast Delivery</div>
+                    <div className="quick-fact-text">2-5 business days</div>
+                  </div>
+                </div>
+                <div className="quick-fact-card">
+                  <SafetyOutlined />
+                  <div>
+                    <div className="quick-fact-title">Secure Checkout</div>
+                    <div className="quick-fact-text">Protected payment options</div>
+                  </div>
+                </div>
+              </div>
+              <Card className="product-highlights-card image-highlights-card">
+                <div className="highlights-header">
+                  <CheckCircleOutlined />
+                  <Text strong>Highlights</Text>
+                </div>
+                <ul className="highlights-list">
+                  <li>Premium quality materials with a long-lasting finish</li>
+                  <li>Designed to balance comfort with everyday performance</li>
+                  <li>Curated to complement modern lifestyles and spaces</li>
+                </ul>
+              </Card>
+              <div className="product-meta-row image-meta-row">
+                <Tooltip title="Learn more about shipping and returns">
+                  <div className="meta-card">
+                    <InfoCircleOutlined />
+                    <div>
+                      <div className="meta-title">Shipping</div>
+                      <div className="meta-text">Free over $50. Tracked delivery.</div>
+                    </div>
+                  </div>
+                </Tooltip>
+                <div className="meta-card">
+                  <SyncOutlined />
+                  <div>
+                    <div className="meta-title">Returns</div>
+                    <div className="meta-text">Easy 7-day return policy.</div>
+                  </div>
+                </div>
+              </div>
+              <Card className="comment-card">
+                <div className="comment-card-header">
+                  <Text strong>Leave a comment</Text>
+                  <Text className="comment-hint">Share your experience with this product.</Text>
+                </div>
+                <Input.TextArea
+                  rows={4}
+                  value={commentText}
+                  onChange={(event) => setCommentText(event.target.value)}
+                  placeholder="Write your comment here..."
+                />
+                <div className="comment-actions">
+                  <Button
+                    type="primary"
+                    onClick={handleSubmitComment}
+                    loading={submittingComment}
+                  >
+                    Submit Comment
+                  </Button>
+                  <Text className="comment-note">Rating is required for comments.</Text>
+                </div>
+              </Card>
+            </div>
           </div>
           <div className="product-info-section">
             <Title level={1} className="product-title">
               {product.name}
             </Title>
 
+            <div className="product-subtitle-row">
+              <Text className="product-subtitle">
+                {product.category?.name ? product.category.name : 'General'} Collection
+              </Text>
+              <div className="product-badge-row">
+                {product.is_flash_sale && (
+                  <Tag color="red">
+                    <StarFilled /> Flash Sale
+                  </Tag>
+                )}
+                {product.is_featured && <Tag color="blue">Featured</Tag>}
+                {product.available ? (
+                  <Tag color="green">Available</Tag>
+                ) : (
+                  <Tag color="volcano">Unavailable</Tag>
+                )}
+              </div>
+            </div>
+
             {/* Rating Display */}
             <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <Rate disabled value={product.rating || 0} allowHalf style={{ fontSize: 20 }} />
+              <Rate disabled value={Number(product.rating || 0)} allowHalf style={{ fontSize: 20 }} />
               <Text style={{ fontSize: 16, color: '#666' }}>
-                {product.rating ? product.rating.toFixed(1) : '0.0'} ({product.review_count || 0} reviews)
+                {product.rating ? Number(product.rating).toFixed(1) : '0.0'} ({product.review_count || 0} reviews)
               </Text>
-              {product.is_flash_sale && (
-                <Tag color="red">
-                  <StarFilled /> Flash Sale!
-                </Tag>
-              )}
-              {product.is_featured && (
-                <Tag color="blue">Featured</Tag>
-              )}
             </div>
 
             {/* Price Section */}
@@ -280,11 +427,129 @@ const ProductDetail = () => {
               )}
             </div>
 
+            <div className="purchase-panel">
+              <div className="purchase-quantity">
+                <Text className="quantity-label">Quantity</Text>
+                <InputNumber
+                  min={1}
+                  max={product.stock}
+                  value={quantity}
+                  onChange={setQuantity}
+                  disabled={product.stock === 0}
+                  size="large"
+                  className="quantity-input"
+                />
+              </div>
+              <div className="purchase-actions">
+                <Button
+                  type="primary"
+                  icon={<ShoppingCartOutlined />}
+                  onClick={handleAddToCart}
+                  loading={addingToCart}
+                  disabled={product.stock === 0 || !product.available}
+                  className="add-to-cart-btn"
+                >
+                  Add to Cart
+                </Button>
+                <Button
+                  icon={isInWishlist ? <HeartFilled /> : <HeartOutlined />} 
+                  onClick={handleToggleWishlist}
+                  loading={addingToWishlist}
+                  className="wishlist-btn"
+                >
+                  {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                </Button>
+              </div>
+              <div className="product-trust-row">
+                <div className="trust-pill">
+                  <SafetyOutlined />
+                  Secure payment
+                </div>
+                <div className="trust-pill">
+                  <TruckOutlined />
+                  Fast delivery
+                </div>
+                <div className="trust-pill">
+                  <SyncOutlined />
+                  7-day returns
+                </div>
+              </div>
+            </div>
+
             <Paragraph className="product-description" style={{ fontSize: 16, lineHeight: 1.8 }}>
               {product.description}
             </Paragraph>
 
             <Divider />
+
+            <div className="detail-panels">
+              <Card className="detail-card">
+                <div className="detail-card-title">Specifications</div>
+                <div className="detail-row">
+                  <span className="detail-label">Category</span>
+                  <span className="detail-value">{product.category?.name || 'General'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">SKU</span>
+                  <span className="detail-value">SKU-{product.id}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Availability</span>
+                  <span className="detail-value">{product.available ? 'Available' : 'Unavailable'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Stock</span>
+                  <span className="detail-value">{product.stock > 0 ? `${product.stock} units` : 'Out of stock'}</span>
+                </div>
+                {formattedCreatedAt && (
+                  <div className="detail-row">
+                    <span className="detail-label">Added</span>
+                    <span className="detail-value">{formattedCreatedAt}</span>
+                  </div>
+                )}
+                {formattedUpdatedAt && (
+                  <div className="detail-row">
+                    <span className="detail-label">Updated</span>
+                    <span className="detail-value">{formattedUpdatedAt}</span>
+                  </div>
+                )}
+              </Card>
+
+              <Card className="detail-card">
+                <div className="detail-card-title">Materials & Care</div>
+                <div className="chip-row">
+                  <span className="detail-chip">Wipe clean</span>
+                  <span className="detail-chip">Cool, dry storage</span>
+                  <span className="detail-chip">Avoid direct sunlight</span>
+                </div>
+              </Card>
+
+              <Card className="detail-card">
+                <div className="detail-card-title">Delivery & Returns</div>
+                <div className="detail-row">
+                  <span className="detail-label">Dispatch</span>
+                  <span className="detail-value">Within 24 hours</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Delivery</span>
+                  <span className="detail-value">2-5 business days</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Returns</span>
+                  <span className="detail-value">Free within 7 days</span>
+                </div>
+              </Card>
+
+              <Card className="detail-card">
+                <div className="detail-card-title">What's Included</div>
+                <div className="chip-row">
+                  <span className="detail-chip">Protective packaging</span>
+                  <span className="detail-chip">Care guide</span>
+                  <span className="detail-chip">Warranty details</span>
+                  <span className="detail-chip">Customer support</span>
+                </div>
+              </Card>
+            </div>
 
             {/* User Rating Section */}
             <Card className="product-rating-card" style={{ marginBottom: 16, background: '#fafafa' }}>
@@ -303,74 +568,6 @@ const ProductDetail = () => {
               )}
             </Card>
 
-            <Card className="product-details-card">
-              <Descriptions column={1} bordered={false} size="middle">
-                <Descriptions.Item label="Category">
-                  <strong>{product.category?.name || 'N/A'}</strong>
-                </Descriptions.Item>
-                <Descriptions.Item label="Stock Available">
-                  <strong>
-                    {product.stock > 0
-                      ? `${product.stock} units`
-                      : 'Out of Stock'}
-                  </strong>
-                </Descriptions.Item>
-                <Descriptions.Item label="Status">
-                  <Tag color={product.available ? 'green' : 'red'}>
-                    {product.available ? 'Available' : 'Unavailable'}
-                  </Tag>
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-
-            <div className="product-actions" style={{ marginTop: 24 }}>
-              <div className="quantity-section" style={{ marginBottom: 16 }}>
-                <div className="quantity-label" style={{ marginBottom: 8, fontWeight: 600 }}>Quantity:</div>
-                <InputNumber
-                  min={1}
-                  max={product.stock}
-                  value={quantity}
-                  onChange={setQuantity}
-                  disabled={product.stock === 0}
-                  size="large"
-                  className="quantity-input"
-                />
-              </div>
-              <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  icon={<ShoppingCartOutlined />}
-                  onClick={handleAddToCart}
-                  loading={addingToCart}
-                  disabled={product.stock === 0 || !product.available}
-                  className="add-to-cart-btn"
-                  style={{
-                    height: 50,
-                    fontSize: 16,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    border: 'none',
-                  }}
-                >
-                  Add to Cart
-                </Button>
-                <Button
-                  size="large"
-                  block
-                  icon={isInWishlist ? <HeartFilled /> : <HeartOutlined />}
-                  onClick={handleToggleWishlist}
-                  loading={addingToWishlist}
-                  danger={isInWishlist}
-                  style={{
-                    height: 50,
-                    fontSize: 16,
-                  }}
-                >
-                  {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
-                </Button>
-              </Space>
-            </div>
           </div>
         </div>
       </Card>
@@ -384,6 +581,33 @@ const ProductDetail = () => {
         }
         style={{ marginTop: 24, borderRadius: 12 }}
       >
+        <div className="rating-summary">
+          <div className="rating-overview">
+            <div className="rating-score">
+              {product.rating ? Number(product.rating).toFixed(1) : '0.0'}
+            </div>
+            <Rate disabled value={Number(product.rating || 0)} allowHalf />
+            <div className="rating-count-text">
+              {product.review_count || 0} review{product.review_count === 1 ? '' : 's'}
+            </div>
+          </div>
+          <div className="rating-breakdown">
+            {[5, 4, 3, 2, 1].map((stars) => {
+              const count = ratingStats.counts[stars - 1] || 0;
+              const percent = ratingStats.total ? Math.round((count / ratingStats.total) * 100) : 0;
+              return (
+                <div key={stars} className="rating-row">
+                  <span className="rating-label">{stars} stars</span>
+                  <Progress percent={percent} showInfo={false} strokeColor="#667eea" />
+                  <span className="rating-value">{count}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <Divider />
+
         {loadingReviews ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <Spin />

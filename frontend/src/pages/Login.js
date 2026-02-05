@@ -14,11 +14,13 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await login(values.username, values.password);
-      // Store token if provided, otherwise rely on session cookies
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
       } else {
-        localStorage.setItem('token', 'session-auth');
+        localStorage.removeItem('token');
+      }
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
       }
       message.success('Login successful!');
       navigate('/');
