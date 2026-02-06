@@ -54,7 +54,7 @@ class WishlistViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['delete'])
     def remove(self, request):
-        product_id = request.data.get('product_id')
+        product_id = request.data.get('product_id') or request.query_params.get('product_id')
         if not product_id:
             return Response(
                 {'error': 'product_id is required'},

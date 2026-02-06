@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.authtoken.models import Token
 from .serializers import UserSerializer
 
 
@@ -34,8 +35,10 @@ def register(request):
         password=password
     )
 
+    token, _ = Token.objects.get_or_create(user=user)
+
     return Response(
-        {'message': 'User created successfully', 'user': UserSerializer(user).data},
+        {'message': 'User created successfully', 'user': UserSerializer(user).data, 'token': token.key},
         status=status.HTTP_201_CREATED
     )
 
@@ -56,10 +59,12 @@ def login_view(request):
     user = authenticate(username=username, password=password)
     if user:
         login(request, user)
+        token, _ = Token.objects.get_or_create(user=user)
         return Response(
             {
                 'message': 'Login successful',
-                'user': UserSerializer(user).data
+                'user': UserSerializer(user).data,
+                'token': token.key
             },
             status=status.HTTP_200_OK
         )

@@ -18,6 +18,7 @@ import {
   updateCartItem,
   removeFromCart,
   clearCart,
+  normalizeList,
 } from '../services/api';
 import './Cart.css';
 
@@ -37,7 +38,7 @@ const Cart = () => {
     setLoading(true);
     try {
       const response = await getCart();
-      setCartItems(response.data);
+      setCartItems(normalizeList(response.data));
     } catch (error) {
       console.error('Error loading cart:', error);
       if (error.response?.status === 401) {
@@ -188,7 +189,19 @@ const Cart = () => {
                       {item.product?.name || 'Unknown Product'}
                     </Title>
                     <div style={{ color: '#666', fontSize: 14 }}>
-                      ${item.product?.price?.toFixed(2) || '0.00'} each
+                      {item.product?.discount_price && item.product?.is_flash_sale ? (
+                        <>
+                          <span style={{ textDecoration: 'line-through', marginRight: 8, color: '#999' }}>
+                            ${Number(item.product.price || 0).toFixed(2)}
+                          </span>
+                          <span style={{ color: '#f5222d', fontWeight: 600 }}>
+                            ${Number(item.product.discount_price || 0).toFixed(2)}
+                          </span>
+                          {' each'}
+                        </>
+                      ) : (
+                        `$${Number(item.product?.price || 0).toFixed(2)} each`
+                      )}
                     </div>
                   </div>
                   <Space size="middle" align="center">
@@ -216,7 +229,7 @@ const Cart = () => {
                           color: '#667eea',
                         }}
                       >
-                        ${(item.total_price || 0).toFixed(2)}
+                        ${Number(item.total_price || 0).toFixed(2)}
                       </div>
                     </div>
                     <Button
@@ -245,7 +258,7 @@ const Cart = () => {
             }}
           >
             <span style={{ color: '#666' }}>Subtotal:</span>
-            <strong>${calculateTotal().toFixed(2)}</strong>
+            <strong>${Number(calculateTotal() || 0).toFixed(2)}</strong>
           </div>
           <div
             style={{
@@ -274,7 +287,7 @@ const Cart = () => {
                 color: '#667eea',
               }}
             >
-              ${calculateTotal().toFixed(2)}
+              ${Number(calculateTotal() || 0).toFixed(2)}
             </span>
           </div>
           <Space direction="vertical" style={{ width: '100%' }} size="middle">

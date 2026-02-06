@@ -26,7 +26,7 @@ import {
   CheckCircleOutlined,
   FireOutlined,
 } from '@ant-design/icons';
-import { getProducts, getCategories, addToWishlist, addToCart } from '../services/api';
+import { getProducts, getCategories, addToWishlist, addToCart, normalizeList } from '../services/api';
 import { message } from 'antd';
 import DigikalaProductCard from '../components/DigikalaProductCard';
 import './Products.css';
@@ -69,7 +69,7 @@ const Products = () => {
   const loadCategories = async () => {
     try {
       const response = await getCategories();
-      setCategories(response.data);
+      setCategories(normalizeList(response.data));
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -78,7 +78,7 @@ const Products = () => {
   const loadPriceRange = async () => {
     try {
       const response = await getProducts({});
-      setAllProducts(response.data);
+      setAllProducts(normalizeList(response.data));
     } catch (error) {
       console.error('Error loading products for price range:', error);
     }
@@ -100,7 +100,7 @@ const Products = () => {
       if (filters.sortBy) params.sort_by = filters.sortBy;
 
       const response = await getProducts(params);
-      setProducts(response.data);
+      setProducts(normalizeList(response.data));
     } catch (error) {
       console.error('Error filtering products:', error);
       message.error('Failed to filter products');

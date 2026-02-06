@@ -1,0 +1,29 @@
+.wishlist-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.wishlist-container .ant-card {
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.wishlist-container .ant-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.wishlist-container .ant-card-actions {
+  background: #fafafa;
+}
+
+.wishlist-container .ant-card-actions > li {
+  margin: 8px 0;
+}
+
+.wishlist-container .ant-card-actions > li > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

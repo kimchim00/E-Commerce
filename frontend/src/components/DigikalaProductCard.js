@@ -83,7 +83,7 @@ const DigikalaProductCard = ({ product, onAddToWishlist, onAddToCart }) => {
 
         {product.rating > 0 && (
           <div className="product-rating">
-            <Rate disabled defaultValue={product.rating} allowHalf style={{ fontSize: 12 }} />
+            <Rate disabled value={Number(product.rating || 0)} allowHalf style={{ fontSize: 12 }} />
             <span className="rating-text">({product.review_count || 0})</span>
           </div>
         )}

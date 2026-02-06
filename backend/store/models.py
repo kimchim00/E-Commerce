@@ -63,7 +63,10 @@ class Cart(models.Model):
 
     @property
     def total_price(self):
-        return (self.product.discount_price or self.product.price) * self.quantity
+        # Use discount price only if the product is in flash sale
+        if self.product.discount_price and self.product.is_flash_sale:
+            return self.product.discount_price * self.quantity
+        return self.product.price * self.quantity
 
 
 class Wishlist(models.Model):
@@ -113,3 +116,54 @@ class OrderItem(models.Model):
     @property
     def total_price(self):
         return self.price * self.quantity
+
+
+class Review(models.Model):
+    RATING_CHOICES = [
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField(choices=RATING_CHOICES)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'product']
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name} ({self.rating} stars)"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Update product rating after review is saved
+        self.update_product_rating()
+
+    def delete(self, *args, **kwargs):
+        product = self.product
+        super().delete(*args, **kwargs)
+        # Update product rating after review is deleted
+        self.update_product_rating_for_product(product)
+
+    def update_product_rating(self):
+        """Update the product's average rating and review count"""
+        self.update_product_rating_for_product(self.product)
+
+    @staticmethod
+    def update_product_rating_for_product(product):
+        """Static method to update product rating"""
+        from django.db.models import Avg, Count
+        result = Review.objects.filter(product=product).aggregate(
+            avg_rating=Avg('rating'),
+            review_count=Count('id')
+        )
+        product.rating = result['avg_rating'] or 0.0
+        product.review_count = result['review_count']
+        product.save()

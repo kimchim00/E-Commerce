@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, Cart, Order, OrderItem, Wishlist
+from .models import Category, Product, Cart, Order, OrderItem, Wishlist, Review
 
 
 @admin.register(Category)
@@ -117,3 +117,12 @@ class OrderItemAdmin(admin.ModelAdmin):
     def total_price_display(self, obj):
         return f"${obj.total_price:.2f}"
     total_price_display.short_description = 'Total Price'
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ['user', 'product', 'rating', 'created_at']
+    list_filter = ['rating', 'created_at']
+    search_fields = ['user__username', 'product__name', 'comment']
+    raw_id_fields = ['user', 'product']
+    readonly_fields = ['created_at', 'updated_at']

@@ -8,10 +8,12 @@ import DigikalaHome from './pages/DigikalaHome';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
+import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AdminProducts from './pages/AdminProducts';
 import ContactUs from './pages/ContactUs';
 import FAQ from './pages/FAQ';
 import ShippingInfo from './pages/ShippingInfo';
@@ -34,10 +36,12 @@ function App() {
               <Route path="/products" element={<Products />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/admin/products" element={<AdminProducts />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/shipping" element={<ShippingInfo />} />

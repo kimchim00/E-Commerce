@@ -11,7 +11,7 @@ import {
   Descriptions,
   Space,
 } from 'antd';
-import { getCart, createOrder } from '../services/api';
+import { getCart, createOrder, normalizeList } from '../services/api';
 import './Checkout.css';
 
 const { Title } = Typography;
@@ -32,8 +32,9 @@ const Checkout = () => {
     setLoading(true);
     try {
       const response = await getCart();
-      setCartItems(response.data);
-      if (response.data.length === 0) {
+      const items = normalizeList(response.data);
+      setCartItems(items);
+      if (items.length === 0) {
         message.warning('Your cart is empty');
         navigate('/cart');
       }
@@ -104,10 +105,10 @@ const Checkout = () => {
                 <div>
                   <div style={{ fontWeight: 500 }}>{item.product?.name || 'Unknown Product'}</div>
                   <div style={{ color: '#666', fontSize: 12 }}>
-                    Qty: {item.quantity} × ${(item.product?.price || 0).toFixed(2)}
+                    Qty: {item.quantity} × ${Number(item.product?.price || 0).toFixed(2)}
                   </div>
                 </div>
-                <div style={{ fontWeight: 600 }}>${(item.total_price || 0).toFixed(2)}</div>
+                <div style={{ fontWeight: 600 }}>${Number(item.total_price || 0).toFixed(2)}</div>
               </div>
             ))}
           </div>
@@ -134,7 +135,7 @@ const Checkout = () => {
                   color: '#667eea',
                 }}
               >
-                ${calculateTotal().toFixed(2)}
+                ${Number(calculateTotal() || 0).toFixed(2)}
               </span>
             </div>
           </div>

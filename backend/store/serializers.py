@@ -1,12 +1,13 @@
 from rest_framework import serializers
+from django.utils.text import slugify
 from django.contrib.auth.models import User
-from .models import Category, Product, Cart, Order, OrderItem
+from .models import Category, Product, Cart, Order, OrderItem, Review
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser']
         read_only_fields = ['id']
 
 
@@ -24,7 +25,7 @@ class ProductSerializer(serializers.ModelSerializer):
         write_only=True
     )
     discount_percentage = serializers.ReadOnlyField()
-    image = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Product
@@ -33,14 +34,32 @@ class ProductSerializer(serializers.ModelSerializer):
                   'stock', 'available', 'rating', 'review_count', 'is_featured', 
                   'is_flash_sale', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at', 'rating', 'review_count']
+        extra_kwargs = {
+            'slug': {'required': False}
+        }
     
-    def get_image(self, obj):
-        if obj.image:
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.image:
             request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
+            representation['image'] = (
+                request.build_absolute_uri(instance.image.url)
+                if request else instance.image.url
+            )
+        else:
+            representation['image'] = None
+        return representation
+
+    def create(self, validated_data):
+        if not validated_data.get('slug'):
+            base_slug = slugify(validated_data.get('name', 'product')) or 'product'
+            slug = base_slug
+            counter = 1
+            while Product.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            validated_data['slug'] = slug
+        return super().create(validated_data)
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -77,4 +96,24 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'total_amount', 'status', 'shipping_address',
                   'items', 'created_at', 'updated_at']
         read_only_fields = ['user', 'created_at', 'updated_at']
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(),
+        source='product',
+        write_only=True
+    )
+    comment = serializers.CharField(required=False, allow_blank=True, default='')
+
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'product_id', 'rating', 'comment', 'created_at', 'updated_at']
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5.")
+        return value
 

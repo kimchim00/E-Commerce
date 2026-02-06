@@ -10,7 +10,7 @@ import {
   HeartOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getCart, getProducts, getCategories } from '../services/api';
+import { getCart, getProducts, getCategories, normalizeList } from '../services/api';
 import './DigikalaHeader.css';
 
 const { Header } = Layout;
@@ -29,10 +29,20 @@ const DigikalaHeader = () => {
   React.useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      setUser({ username: 'User' });
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          setUser({ username: 'User' });
+        }
+      } else {
+        setUser({ username: 'User' });
+      }
       loadCart();
     } else {
       setCartCount(0);
+      setUser(null);
     }
     loadCategories();
   }, [location]);
@@ -46,7 +56,8 @@ const DigikalaHeader = () => {
     
     try {
       const response = await getCart();
-      const count = response.data.reduce((sum, item) => sum + item.quantity, 0);
+      const items = normalizeList(response.data);
+      const count = items.reduce((sum, item) => sum + item.quantity, 0);
       setCartCount(count);
     } catch (error) {
       // 403 is expected when not authenticated, don't log it
@@ -63,7 +74,7 @@ const DigikalaHeader = () => {
   const loadCategories = async () => {
     try {
       const response = await getCategories();
-      setCategories(response.data);
+      setCategories(normalizeList(response.data));
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -71,6 +82,7 @@ const DigikalaHeader = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
     navigate('/');
     window.location.reload();
@@ -87,7 +99,7 @@ const DigikalaHeader = () => {
     if (value && value.length > 2) {
       try {
         const response = await getProducts({ search: value });
-        const products = response.data.slice(0, 5);
+        const products = normalizeList(response.data).slice(0, 5);
         setSearchOptions(
           products.map((product) => ({
             value: product.name,
@@ -117,6 +129,14 @@ const DigikalaHeader = () => {
   };
 
   const userMenuItems = [
+    ...(user?.is_staff
+      ? [{
+          key: 'admin-products',
+          icon: <ShoppingOutlined />,
+          label: 'Admin Products',
+          onClick: () => navigate('/admin/products'),
+        }]
+      : []),
     {
       key: 'orders',
       icon: <ShoppingOutlined />,
