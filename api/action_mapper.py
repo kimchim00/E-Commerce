@@ -46,6 +46,8 @@ class UserAction(str, Enum):
     # Reviews
     VIEW_REVIEWS = "view_reviews"
     SUBMIT_REVIEW = "submit_review"
+    UPDATE_REVIEW = "update_review"
+    DELETE_REVIEW = "delete_review"
     VIEW_MY_REVIEWS = "view_my_reviews"
     VIEW_USER_PRODUCT_REVIEW = "view_user_product_review"
 
@@ -92,6 +94,8 @@ PATH_PATTERNS = [
     (r"^/reviews/?$", ["POST"], UserAction.SUBMIT_REVIEW),
     (r"^/reviews/my_reviews/?$", ["GET"], UserAction.VIEW_MY_REVIEWS),
     (r"^/reviews/user_product_review/?$", ["GET"], UserAction.VIEW_USER_PRODUCT_REVIEW),
+    (r"^/reviews/\d+/?$", ["PUT", "PATCH"], UserAction.UPDATE_REVIEW),
+    (r"^/reviews/\d+/?$", ["DELETE"], UserAction.DELETE_REVIEW),
 
     # System
     (r"^/health/?$", ["GET"], UserAction.HEALTH_CHECK),
@@ -219,13 +223,23 @@ def extract_context_from_request(path: str, method: str, query_params: Optional[
     if order_match:
         context['order_id'] = int(order_match.group(1))
 
+    # Extract review ID from path
+    review_match = re.search(r'/reviews/(\d+)', path)
+    if review_match:
+        context['review_id'] = int(review_match.group(1))
+
+    # Extract wishlist context from request body
+    if path.startswith('/wishlist') and request_body:
+        if 'product_id' in request_body:
+            context['product_id'] = request_body['product_id']
+
     # Extract review context from query params (product_id for reviews)
     if path.startswith('/reviews'):
         if query_params and 'product_id' in query_params:
             context['product_id'] = query_params['product_id']
 
-        # Extract rating and product_id from POST body
-        if method == 'POST' and request_body:
+        # Extract rating and product_id from POST/PUT body
+        if method in ['POST', 'PUT', 'PATCH'] and request_body:
             if 'product_id' in request_body:
                 context['product_id'] = request_body['product_id']
             if 'rating' in request_body:

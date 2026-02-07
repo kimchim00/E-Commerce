@@ -539,8 +539,8 @@ async def create_order(
 
 
 # Wishlist endpoints
-@app.get("/wishlist", response_model=List[Product])
-async def get_wishlist(
+@app.get("/wishlist/products", response_model=List[Product])
+async def get_wishlist_products(
     request: Request,
     token: Optional[str] = Depends(get_current_user),
     client: httpx.AsyncClient = Depends(get_django_client)
@@ -607,13 +607,25 @@ async def add_to_wishlist(
 
 @app.delete("/wishlist/remove")
 async def remove_from_wishlist(
-    product_id: int,
     request: Request,
+    product_id: Optional[int] = None,
     token: Optional[str] = Depends(get_current_user),
     client: httpx.AsyncClient = Depends(get_django_client)
 ):
     cookies = dict(request.cookies)
     headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+    # Get product_id from query params or request body
+    if product_id is None:
+        try:
+            body = await request.json()
+            product_id = body.get('product_id')
+        except:
+            pass
+
+    if product_id is None:
+        raise HTTPException(status_code=400, detail="product_id is required")
+
     data = {"product_id": product_id}
     response = await client.delete(
         f"{DJANGO_BASE_URL}/wishlist/remove/",
@@ -877,6 +889,114 @@ async def get_user_product_review(
 
         response.raise_for_status()
         return response.json()
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=503,
+            detail="Django backend is not available. Please ensure Django is running on http://localhost:8000"
+        )
+    except HTTPException:
+        raise
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.put("/reviews/{review_id}", response_model=Review)
+async def update_review(
+    review_id: int,
+    review_data: ReviewCreate,
+    request: Request,
+    token: Optional[str] = Depends(get_current_user),
+    client: httpx.AsyncClient = Depends(get_django_client)
+):
+    """Update an existing review"""
+    try:
+        cookies = dict(request.cookies)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        data = {
+            "product_id": review_data.product_id,
+            "rating": review_data.rating,
+            "comment": review_data.comment
+        }
+
+        response = await client.put(
+            f"{DJANGO_BASE_URL}/reviews/{review_id}/",
+            json=data,
+            headers=headers,
+            cookies=cookies
+        )
+
+        if response.status_code in [401, 403]:
+            error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            error_detail = error_data.get("detail", error_data.get("error", "Authentication required"))
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Authentication error: {error_detail}. Please log in first."
+            )
+
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail="Review not found")
+
+        response.raise_for_status()
+        return response.json()
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=503,
+            detail="Django backend is not available. Please ensure Django is running on http://localhost:8000"
+        )
+    except HTTPException:
+        raise
+    except httpx.HTTPStatusError as e:
+        error_detail = "Unknown error"
+        try:
+            if e.response.headers.get("content-type", "").startswith("application/json"):
+                error_data = e.response.json()
+                error_detail = error_data.get("detail", error_data.get("error", str(e)))
+            else:
+                error_detail = e.response.text[:200] if e.response.text else str(e)
+        except:
+            error_detail = str(e)
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Django error: {error_detail}"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.delete("/reviews/{review_id}")
+async def delete_review(
+    review_id: int,
+    request: Request,
+    token: Optional[str] = Depends(get_current_user),
+    client: httpx.AsyncClient = Depends(get_django_client)
+):
+    """Delete a review"""
+    try:
+        cookies = dict(request.cookies)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        response = await client.delete(
+            f"{DJANGO_BASE_URL}/reviews/{review_id}/",
+            headers=headers,
+            cookies=cookies
+        )
+
+        if response.status_code in [401, 403]:
+            error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
+            error_detail = error_data.get("detail", error_data.get("error", "Authentication required"))
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Authentication error: {error_detail}. Please log in first."
+            )
+
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail="Review not found")
+
+        response.raise_for_status()
+        return {"message": "Review deleted successfully"}
     except httpx.ConnectError:
         raise HTTPException(
             status_code=503,
